@@ -164,8 +164,8 @@ npm run build
 ### 1. Create the database and Render service
 
 1. Provision a Neon PostgreSQL database. Use its pooled host and a JDBC URL such as `jdbc:postgresql://host:5432/neondb?sslmode=require`; store the username and password separately. Render's free PostgreSQL offering is time-limited, so this deployment uses Neon instead.
-2. In Render, create a **Free** Docker web service from this public repository: root directory `backend`, Dockerfile `./Dockerfile`, Docker context `.`, health check `/actuator/health`. Alternatively, connect the repository as a Blueprint using [`render.yaml`](render.yaml). Configure the runtime environment variables listed below before the first start.
-3. Note the service ID and create a Render API key. The blueprint has `autoDeployTrigger: off` so GitHub Actions is the single deployment gate.
+2. Create a dedicated Render API key and note your workspace ID (`tea-...`, visible in workspace settings). Set the GitHub secrets below. The workflow creates a **Free** Docker backend in Ohio on the first run, then reuses that exact repository's service on later runs. It never selects a paid plan. Complete any account verification requested by Render yourself.
+3. If a backend already exists, set `RENDER_SERVICE_ID` instead of `RENDER_OWNER_ID`. Configure it with root directory `backend`, Dockerfile `./Dockerfile`, Docker context `.`, health check `/actuator/health`, and auto-deploy **Off**. [`render.yaml`](render.yaml) is also supplied as an alternative Blueprint.
 
 ### 2. Add repository secrets
 
@@ -173,9 +173,9 @@ In GitHub: **Settings → Secrets and variables → Actions**, create these repo
 
 | Secret | Value |
 | --- | --- |
-| `VITE_API_BASE_URL` | Public API origin, e.g. `https://eswar-portfolio-api.onrender.com` |
 | `RENDER_API_KEY` | Dedicated Render API key; keep private and revoke when no longer needed |
-| `RENDER_SERVICE_ID` | Render web-service ID |
+| `RENDER_OWNER_ID` | Render workspace ID; lets the first workflow create the free backend |
+| `RENDER_SERVICE_ID` | Optional existing Render web-service ID; overrides automatic discovery |
 | `DATABASE_URL` | Production JDBC PostgreSQL URL |
 | `DATABASE_USERNAME` | Production database username |
 | `DATABASE_PASSWORD` | Production database password |
@@ -184,7 +184,7 @@ In GitHub: **Settings → Secrets and variables → Actions**, create these repo
 | `ADMIN_PASSWORD_HASH` | Bcrypt hash of the CMS password |
 | `CORS_ALLOWED_ORIGINS` | `https://YOUR_GITHUB_USERNAME.github.io` (plus any custom domain, comma-separated) |
 
-The workflow transfers the backend runtime variables to Render over its authenticated API. They are never committed, printed, or placed in `render.yaml`. `VITE_API_BASE_URL` is a public browser setting, not a secret; its value is included in the compiled frontend so browsers can reach the API. The workflow supplies `VITE_SITE_URL` automatically from GitHub Pages to create absolute canonical, Open Graph, Twitter Card, robots, and sitemap URLs.
+The workflow transfers backend runtime variables to Render over its authenticated API. They are never committed, printed, or placed in `render.yaml`. It discovers the deployed API's URL and passes it to the frontend as `VITE_API_BASE_URL`, a public browser setting. The workflow supplies `VITE_SITE_URL` automatically from GitHub Pages to create absolute canonical, Open Graph, Twitter Card, robots, and sitemap URLs.
 
 The login limiter defaults to five failed attempts per username/IP pair followed by a five-minute lockout. If an environment needs different values, configure the non-secret Render environment variables `AUTH_MAX_FAILED_ATTEMPTS` and `AUTH_LOCKOUT_SECONDS`; keep the same values in local `backend/.env` when testing.
 
