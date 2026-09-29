@@ -1,0 +1,26 @@
+# Java / Spring Boot
+backend/target/
+backend/.mvn/
+
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
+work/
+outputs/
+tmp/
+.deployment/
+*.zip
+
+# Local configuration and editor noise
+.env
+.env.*.local
+backend/.env
+frontend/.env
+.idea/
+.vscode/
+*.iml
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

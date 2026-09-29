@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:portfolio-security-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+
+app:
+  jwt:
+    secret: portfolio-security-test-secret-must-be-at-least-32-characters
+    expiration-hours: 1
+  admin:
+    username: test-admin
+    # BCrypt hash for the test-only password "test-password".
+    password-hash: '$2a$10$cSwp5hrPIogWh1dl4Vih1.0cuG7RgAXAK1fYLu5bvELeq6SxK4.Lu'
+  cors:
+    allowed-origins: http://localhost:5181
+  auth-rate-limit:
+    max-failures: 3
+    lockout-seconds: 60

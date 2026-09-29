@@ -1,0 +1,17 @@
+{
+  "name": "eswar-portfolio-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5181 --strictPort",
+    "build": "node build.mjs",
+    "preview": "vite preview --host 127.0.0.1 --port 5181 --strictPort"
+  },
+  "dependencies": {
+    "vite": "8.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {}
+}
