@@ -59,7 +59,6 @@ for (let attempt = 0; attempt < 120; attempt++) {
     const details = await render(`/services/${service.id}`);
     const apiUrl = details.serviceDetails?.url;
     if (!apiUrl?.startsWith('https://')) throw new Error('Render did not return an HTTPS service URL.');
-    await appendFile(env.GITHUB_OUTPUT, `api_url=${apiUrl}\nservice_id=${service.id}\n`);
     await appendFile(env.GITHUB_STEP_SUMMARY, `Backend deployed: [${apiUrl}](${apiUrl}/actuator/health)\n\nService ID: ${service.id}\n`);
     process.exit(0);
   }

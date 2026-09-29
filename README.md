@@ -184,7 +184,9 @@ In GitHub: **Settings → Secrets and variables → Actions**, create these repo
 | `ADMIN_PASSWORD_HASH` | Bcrypt hash of the CMS password |
 | `CORS_ALLOWED_ORIGINS` | `https://YOUR_GITHUB_USERNAME.github.io` (plus any custom domain, comma-separated) |
 
-The workflow transfers backend runtime variables to Render over its authenticated API. They are never committed, printed, or placed in `render.yaml`. It discovers the deployed API's URL and passes it to the frontend as `VITE_API_BASE_URL`, a public browser setting. The workflow supplies `VITE_SITE_URL` automatically from GitHub Pages to create absolute canonical, Open Graph, Twitter Card, robots, and sitemap URLs.
+Also add a repository **variable** (not a secret) named `VITE_API_BASE_URL`, with the public API origin: `https://eswar-portfolio-api.onrender.com`. If Render assigns a different URL, copy the actual URL from its service page. Public URLs are intentionally configured as variables so GitHub's secret masking cannot remove them from cross-job configuration.
+
+The workflow transfers backend runtime variables to Render over its authenticated API. They are never committed, printed, or placed in `render.yaml`. The workflow supplies `VITE_SITE_URL` automatically from GitHub Pages to create absolute canonical, Open Graph, Twitter Card, robots, and sitemap URLs.
 
 The login limiter defaults to five failed attempts per username/IP pair followed by a five-minute lockout. If an environment needs different values, configure the non-secret Render environment variables `AUTH_MAX_FAILED_ATTEMPTS` and `AUTH_LOCKOUT_SECONDS`; keep the same values in local `backend/.env` when testing.
 

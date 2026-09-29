@@ -38,7 +38,7 @@ jobs:
       - name: Build frontend
         run: npm run build
         env:
-          VITE_API_BASE_URL: ${{ needs.deploy-api.outputs.api_url }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
           VITE_SITE_URL: ${{ steps.pages.outputs.base_url }}
           PORTFOLIO_SNAPSHOT: required
@@ -91,8 +91,6 @@ jobs:
     needs: [validate-api, validate-frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    outputs:
-      api_url: ${{ steps.backend.outputs.api_url }}
     env:
       RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
       RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
