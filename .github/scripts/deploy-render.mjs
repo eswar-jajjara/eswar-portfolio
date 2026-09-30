@@ -9,7 +9,8 @@ for (const key of ['RENDER_API_KEY', ...requiredRuntimeNames]) {
 if (Boolean(env.GOOGLE_CLIENT_ID) !== Boolean(env.GOOGLE_ADMIN_EMAIL)) {
   throw new Error('Set both GOOGLE_CLIENT_ID and GOOGLE_ADMIN_EMAIL to enable Google sign-in, or leave both unset.');
 }
-const runtimeNames = [...requiredRuntimeNames, 'GOOGLE_CLIENT_ID', 'GOOGLE_ADMIN_EMAIL'];
+const googleRuntimeNames = ['GOOGLE_CLIENT_ID', 'GOOGLE_ADMIN_EMAIL'];
+const runtimeNames = [...requiredRuntimeNames, ...(env.GOOGLE_CLIENT_ID ? googleRuntimeNames : [])];
 async function render(path, method = 'GET', body) {
   const response = await fetch(`https://api.render.com/v1${path}`, {
     method, signal: AbortSignal.timeout(60000),
@@ -36,7 +37,7 @@ else {
   if (!service) {
     const result = await render('/services', 'POST', {
       type: 'web_service', name, ownerId: env.RENDER_OWNER_ID, repo, branch: 'main', rootDir: 'backend', autoDeployTrigger: 'off',
-      envVars: runtimeNames.map(key => ({ key, value: env[key] || '' })),
+      envVars: runtimeNames.map(key => ({ key, value: env[key] })),
       serviceDetails: { runtime: 'docker', plan: 'free', region: 'ohio', healthCheckPath: '/actuator/health',
         envSpecificDetails: { dockerfilePath: './Dockerfile', dockerContext: '.', dockerCommand: '' } },
     });
@@ -49,7 +50,15 @@ if (!service?.id || service.type !== 'web_service' || service.repo?.replace(/\.g
   throw new Error('The selected service does not match this repository; refusing to alter it.');
 }
 if (!deploymentId) {
-  for (const key of runtimeNames) await render(`/services/${service.id}/env-vars/${key}`, 'PUT', { value: env[key] || '' });
+  for (const key of runtimeNames) await render(`/services/${service.id}/env-vars/${key}`, 'PUT', { value: env[key] });
+  if (!env.GOOGLE_CLIENT_ID) {
+    // Render rejects empty values. Remove only the two optional Google keys when
+    // sign-in is deliberately unconfigured; the required password login stays intact.
+    for (const key of googleRuntimeNames) {
+      try { await render(`/services/${service.id}/env-vars/${key}`, 'DELETE'); }
+      catch (error) { if (!error.message.includes('HTTP 404')) throw error; }
+    }
+  }
   const deployment = await render(`/services/${service.id}/deploys`, 'POST', { clearCache: 'do_not_clear', commitId: env.GITHUB_SHA });
   deploymentId = deployment.id;
 }
