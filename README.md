@@ -2,6 +2,8 @@
 
 A full-stack, data-driven portfolio for an AI/ML, Edge Computing, and IoT engineering profile. The public site is a responsive React single-page experience; its profile, projects, experience, certifications, endorsements, and GitHub proof are fetched from a Spring Boot REST API. The protected `/admin` route lets the single portfolio owner change recruiter-facing content without rebuilding or redeploying the frontend.
 
+For day-to-day editing, password changes, and troubleshooting, start with the [portfolio owner guide](PORTFOLIO_OWNER_GUIDE.md).
+
 Deployment target: **GitHub Pages** for React, **Render Free** for the Spring Boot API, and **Neon PostgreSQL** for persistent production data.
 
 ## Included
