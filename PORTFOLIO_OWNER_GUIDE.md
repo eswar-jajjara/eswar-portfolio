@@ -10,7 +10,7 @@ Last checked: 30 September 2026. This file contains instructions, **not password
 - Render backend: <https://dashboard.render.com/> (service `eswar-portfolio-api`)
 - Neon database: <https://console.neon.tech/>
 
-Your admin username is `eswar`. The current password is in the private local `.deployment/ADMIN-LOGIN.txt` note; it is **not** in this guide or the GitHub repository. That note will become outdated if you change the password. The public site has no admin buttons; only someone who knows the `/admin/` URL and valid credentials can use the CMS.
+Your admin username is `eswar`. The `.deployment/ADMIN-LOGIN.txt` note was created for the **original** deployment password. It is now outdated because you changed the production password on 30 September 2026. Use your new password from your own password manager, not that old note. The plain password is **not** in this guide or the GitHub repository. The public site has no admin buttons; only someone who knows the `/admin/` URL and valid credentials can use the CMS.
 
 Google sign-in can be enabled for **only** `eswarjajjra@gmail.com`. Until its Google Cloud client ID is configured, the existing password form remains the way to sign in. After it is configured, both options work; your password stays as a backup.
 
@@ -56,6 +56,8 @@ There is currently **no password-change button in `/admin/`**. The login checks 
 4. Open [Build and deploy portfolio](https://github.com/eswar-jajjara/eswar-portfolio/actions/workflows/deploy.yml), choose **Run workflow** on `main`, and wait for the run to show **success**. Updating the GitHub secret alone is not enough: the workflow must copy it to Render and restart the API.
 5. Try the [admin CMS](https://eswar-jajjara.github.io/eswar-portfolio/admin/) in a new private/incognito window using `eswar` and the **new plain password**. Do not type the bcrypt hash into the login form. Your old password should stop working after the new deployment.
 6. Save the new plain password in your password manager. Update or remove the old private `.deployment/ADMIN-LOGIN.txt` note yourself; it does not update automatically.
+
+If you have pasted a password into a chat or reused your name as a password, change it again to a strong, unique, randomly generated one. Do not send the replacement password to anyone helping with the site; only the bcrypt hash belongs in the GitHub secret.
 
 If you only want to change the password of a **local** copy running on your PC, put the new hash in `ADMIN_PASSWORD_HASH` inside the ignored `backend/.env` file and restart Spring Boot. That does not change the live website. Likewise, the live password change above does not automatically change your local `.env`.
 
