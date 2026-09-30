@@ -41,6 +41,7 @@ export const adminApi = {
     return request('/api/admin/media', { method: 'POST', headers: adminHeaders(token), body });
   },
   login: (credentials) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
+  googleLogin: (credential) => request('/api/auth/google', { method: 'POST', body: JSON.stringify({ credential }) }),
   getAll: (token) => Promise.all([
     request('/api/admin/summary', { headers: adminHeaders(token) }).catch((error) => {
       if (error.status === 404) return null;

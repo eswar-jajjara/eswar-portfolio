@@ -14,6 +14,7 @@ Deployment target: **GitHub Pages** for React, **Render Free** for the Spring Bo
 - CMS-managed recruiter signals: resume URL, availability status, booking URL, current focus, optional project impact metrics, and real endorsements. These are editable from `/admin`.
 - Live GitHub repository proof (stars, primary language, and last-pushed time) for projects that link to GitHub repositories. It is fetched by the API and cached for six hours.
 - JWT login for one administrator, with a per-username/IP failed-login limit. The username and bcrypt password hash come from environment variables.
+- Optional Sign in with Google for the exact allowlisted Gmail account. The backend verifies Google's ID token and then issues the same short-lived admin JWT; password login remains available as a backup.
 - PostgreSQL Flyway migrations, starter records, Docker Compose for local Postgres, health check, CORS configuration, validation, and integration tests.
 - Search/share essentials: Open Graph and Twitter metadata, dynamic `Person` JSON-LD, `robots.txt`, and a sitemap generated during the production build.
 - GitHub Actions deployment on every push to `main`. It builds the frontend, publishes it to Pages, runs the API integration tests and packages the API, securely syncs Render runtime secrets, deploys the validated commit, and waits for Render to report success.
@@ -121,6 +122,7 @@ Authentication:
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | POST | `/api/auth/login` | Accepts `{ "username", "password" }`, returns a JWT |
+| POST | `/api/auth/google` | Accepts a Google Identity Services `{ "credential" }` ID token; returns the same admin JWT only for the configured verified Gmail account |
 
 Authenticated endpoints accept `Authorization: Bearer <token>`:
 
@@ -185,8 +187,11 @@ In GitHub: **Settings → Secrets and variables → Actions**, create these repo
 | `ADMIN_USERNAME` | CMS username |
 | `ADMIN_PASSWORD_HASH` | Bcrypt hash of the CMS password |
 | `CORS_ALLOWED_ORIGINS` | `https://YOUR_GITHUB_USERNAME.github.io` (plus any custom domain, comma-separated) |
+| `GOOGLE_ADMIN_EMAIL` | Optional exact Gmail address allowed to use Google admin login; set together with `GOOGLE_CLIENT_ID` |
 
 Also add a repository **variable** (not a secret) named `VITE_API_BASE_URL`, with the public API origin: `https://eswar-portfolio-api.onrender.com`. If Render assigns a different URL, copy the actual URL from its service page. Public URLs are intentionally configured as variables so GitHub's secret masking cannot remove them from cross-job configuration.
+
+For Google admin login, add a public repository **variable** named `GOOGLE_CLIENT_ID` containing a Google Cloud OAuth **Web application** client ID. It is used both as `VITE_GOOGLE_CLIENT_ID` in the frontend and as `GOOGLE_CLIENT_ID` in Render. Add the `GOOGLE_ADMIN_EMAIL` secret at the same time; if both are absent the Google button stays hidden. Do not add a Google client secret. [The owner guide](PORTFOLIO_OWNER_GUIDE.md#enable-google-admin-sign-in) explains the Google Cloud steps and exact authorized origin.
 
 The workflow transfers backend runtime variables to Render over its authenticated API. They are never committed, printed, or placed in `render.yaml`. The workflow supplies `VITE_SITE_URL` automatically from GitHub Pages to create absolute canonical, Open Graph, Twitter Card, robots, and sitemap URLs.
 
@@ -202,7 +207,7 @@ GitHub Pages serves the frontend at `https://YOUR_GITHUB_USERNAME.github.io/REPO
 
 ### Edit your live portfolio in the browser
 
-Open `https://eswar-jajjara.github.io/eswar-portfolio/admin/` and sign in using the production admin username and password. Edit your profile, skills, projects, experience, certifications, and recommendations, then **Save** the record. Changes are stored in PostgreSQL and require no code changes or redeploy. Open public tabs refresh on focus and every minute while visible.
+Open `https://eswar-jajjara.github.io/eswar-portfolio/admin/` and sign in using the production admin username/password, or the configured Google button. Edit your profile, skills, projects, experience, certifications, and recommendations, then **Save** the record. Changes are stored in PostgreSQL and require no code changes or redeploy. Open public tabs refresh on focus and every minute while visible.
 
 Project images, certificate PDFs, and a resume PDF can be uploaded directly from the corresponding CMS field. Raster images are resized and converted to WebP in the browser. Uploads are limited to 5 MB and stored in PostgreSQL, not Render's temporary filesystem. Select a file, wait for upload confirmation, then save the record. Only upload files intended to be public; an uploaded file's URL can be downloaded without login. Removing a record does not erase its uploaded file.
 
@@ -211,6 +216,7 @@ Render Free sleeps when idle; the first API request or admin sign-in can take ab
 ## Security notes
 
 - Passwords are never stored in the database or source: only a bcrypt hash is read from the runtime environment.
+- Google sign-in uses Google's official browser button. The API verifies the Google-signed ID token's signature, audience, issuer, expiry, verified email, and exact allowlisted Gmail address. A Google client secret is not needed. Changing a Google password does not change the separate backup CMS password.
 - The JWT is signed with `JWT_SECRET`, expires after eight hours by default, and is held in `sessionStorage`, not a persistent cookie.
 - Login attempts are rate-limited by username/IP pair. Login failures intentionally return the same generic response so an attacker cannot use them to confirm usernames.
 - All write endpoints are denied unless the request includes a valid token for the configured admin username.

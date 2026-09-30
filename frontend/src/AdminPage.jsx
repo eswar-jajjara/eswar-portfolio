@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useId, useState } from 'react';
 import { adminApi } from './api/client';
 import { initialPortfolio, publicPath, navigate, assetUrl } from './site';
+import GoogleSignIn, { googleClientId } from './GoogleSignIn';
 
 const emptyProject = { title: '', description: '', techStack: '', link: '', imageUrl: '', impactMetrics: '', sortOrder: 0, featured: true };
 const emptyExperience = { role: '', company: '', startDate: '', endDate: '', description: '', sortOrder: 0 };
@@ -48,10 +49,10 @@ function Field({ id, label, value, onChange, onBlur, multiline = false, type = '
   return <div className={`field ${error ? 'has-error' : ''}`}><label className="field-caption" htmlFor={controlId}>{label}{required === false && <small>Optional</small>}</label>{multiline ? <textarea {...props} rows="4" /> : options ? <select {...props}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input {...props} type={type} />}{uploadAccept && <MediaUpload value={value} onChange={onChange} accept={uploadAccept} disabled={disabled} />}{helpText && <small id={`${controlId}-help`} className="field-help">{helpText}</small>}{error && <span id={`${controlId}-error`} className="field-error">{error}</span>}</div>;
 }
 
-function Login({ onLogin, error, busy }) {
+function Login({ onLogin, onGoogleLogin, error, busy }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  return <main className="admin-login"><div className="login-panel"><button className="back-button" type="button" onClick={() => navigate(publicPath)}>← Public portfolio</button><p className="eyebrow">CMS ACCESS</p><h1>Admin sign-in</h1><p>Manage the public portfolio without rebuilding the site.</p><form onSubmit={(event) => { event.preventDefault(); onLogin({ username, password }); }}><Field label="Username" value={username} onChange={setUsername} autoComplete="username" /><Field label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" />{error && <p className="form-error" role="alert">{error}</p>}<button className="button" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button></form></div></main>;
+  return <main className="admin-login"><div className="login-panel"><button className="back-button" type="button" onClick={() => navigate(publicPath)}>← Public portfolio</button><p className="eyebrow">CMS ACCESS</p><h1>Admin sign-in</h1><p>Manage the public portfolio without rebuilding the site.</p><GoogleSignIn onCredential={onGoogleLogin} />{googleClientId && <p className="login-divider"><span>or use your admin password</span></p>}<form onSubmit={(event) => { event.preventDefault(); onLogin({ username, password }); }}><Field label="Username" value={username} onChange={setUsername} autoComplete="username" /><Field label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" />{error && <p className="form-error" role="alert">{error}</p>}<button className="button" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button></form></div></main>;
 }
 
 function EditorCard({ title, children }) { return <section className="editor-card" id={`cms-${title.toLowerCase().replace(/[^a-z]+/g, '-')}`}><h2>{title}</h2>{children}</section>; }
@@ -161,6 +162,7 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const login = async (credentials) => { try { setBusy(true); setError(''); const response = await adminApi.login(credentials); sessionStorage.setItem('portfolio-admin-token', response.token); setToken(response.token); } catch (err) { setError(err.message); } finally { setBusy(false); } };
+  const googleLogin = async (credential) => { if (busy) return; try { setBusy(true); setError(''); const response = await adminApi.googleLogin(credential); sessionStorage.setItem('portfolio-admin-token', response.token); setToken(response.token); } catch (err) { setError(err.message); } finally { setBusy(false); } };
   const logout = () => { sessionStorage.removeItem('portfolio-admin-token'); setToken(null); };
-  return token ? <AdminDashboard token={token} onLogout={logout} /> : <Login onLogin={login} error={error} busy={busy} />;
+  return token ? <AdminDashboard token={token} onLogout={logout} /> : <Login onLogin={login} onGoogleLogin={googleLogin} error={error} busy={busy} />;
 }

@@ -2,10 +2,14 @@ import { appendFile } from 'node:fs/promises';
 
 // Never log response bodies: environment-variable responses contain secrets.
 const env = process.env;
-const runtimeNames = ['DATABASE_URL', 'DATABASE_USERNAME', 'DATABASE_PASSWORD', 'JWT_SECRET', 'ADMIN_USERNAME', 'ADMIN_PASSWORD_HASH', 'CORS_ALLOWED_ORIGINS'];
-for (const key of ['RENDER_API_KEY', ...runtimeNames]) {
+const requiredRuntimeNames = ['DATABASE_URL', 'DATABASE_USERNAME', 'DATABASE_PASSWORD', 'JWT_SECRET', 'ADMIN_USERNAME', 'ADMIN_PASSWORD_HASH', 'CORS_ALLOWED_ORIGINS'];
+for (const key of ['RENDER_API_KEY', ...requiredRuntimeNames]) {
   if (!env[key]) throw new Error(`Missing GitHub Actions secret: ${key}`);
 }
+if (Boolean(env.GOOGLE_CLIENT_ID) !== Boolean(env.GOOGLE_ADMIN_EMAIL)) {
+  throw new Error('Set both GOOGLE_CLIENT_ID and GOOGLE_ADMIN_EMAIL to enable Google sign-in, or leave both unset.');
+}
+const runtimeNames = [...requiredRuntimeNames, 'GOOGLE_CLIENT_ID', 'GOOGLE_ADMIN_EMAIL'];
 async function render(path, method = 'GET', body) {
   const response = await fetch(`https://api.render.com/v1${path}`, {
     method, signal: AbortSignal.timeout(60000),
@@ -32,7 +36,7 @@ else {
   if (!service) {
     const result = await render('/services', 'POST', {
       type: 'web_service', name, ownerId: env.RENDER_OWNER_ID, repo, branch: 'main', rootDir: 'backend', autoDeployTrigger: 'off',
-      envVars: runtimeNames.map(key => ({ key, value: env[key] })),
+      envVars: runtimeNames.map(key => ({ key, value: env[key] || '' })),
       serviceDetails: { runtime: 'docker', plan: 'free', region: 'ohio', healthCheckPath: '/actuator/health',
         envSpecificDetails: { dockerfilePath: './Dockerfile', dockerContext: '.', dockerCommand: '' } },
     });
@@ -45,7 +49,7 @@ if (!service?.id || service.type !== 'web_service' || service.repo?.replace(/\.g
   throw new Error('The selected service does not match this repository; refusing to alter it.');
 }
 if (!deploymentId) {
-  for (const key of runtimeNames) await render(`/services/${service.id}/env-vars/${key}`, 'PUT', { value: env[key] });
+  for (const key of runtimeNames) await render(`/services/${service.id}/env-vars/${key}`, 'PUT', { value: env[key] || '' });
   const deployment = await render(`/services/${service.id}/deploys`, 'POST', { clearCache: 'do_not_clear', commitId: env.GITHUB_SHA });
   deploymentId = deployment.id;
 }

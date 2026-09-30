@@ -296,6 +296,12 @@ footer { display: flex; align-items: center; justify-content: space-between; pad
 .back-button { margin-bottom: 2rem; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: .86rem; }
 .login-panel form { display: grid; gap: 1rem; margin-top: 2rem; }
 .login-panel form .button { width: 100%; margin-top: .5rem; }
+.google-login { display: grid; justify-items: center; gap: .45rem; margin-top: 1.5rem; }
+.google-login-button { display: flex; width: 100%; min-height: 44px; justify-content: center; }
+.google-login small { color: var(--muted); font-size: .74rem; text-align: center; }
+.login-divider { position: relative; margin: 1.4rem 0 -1rem; color: var(--faint); font-size: .72rem; font-weight: 700; text-align: center; }
+.login-divider::before { position: absolute; z-index: 0; top: 50%; right: 0; left: 0; border-top: 1px solid var(--line); content: ''; }
+.login-divider span { position: relative; z-index: 1; padding: 0 .7rem; background: var(--panel); }
 
 .admin-shell { min-height: 100vh; padding: 2rem max(24px, calc((100% - 1160px) / 2)); background: var(--ground); }
 .admin-header { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0 2rem; border-bottom: 1px solid var(--line); }

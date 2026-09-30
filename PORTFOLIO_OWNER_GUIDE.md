@@ -12,6 +12,8 @@ Last checked: 30 September 2026. This file contains instructions, **not password
 
 Your admin username is `eswar`. The current password is in the private local `.deployment/ADMIN-LOGIN.txt` note; it is **not** in this guide or the GitHub repository. That note will become outdated if you change the password. The public site has no admin buttons; only someone who knows the `/admin/` URL and valid credentials can use the CMS.
 
+Google sign-in can be enabled for **only** `eswarjajjra@gmail.com`. Until its Google Cloud client ID is configured, the existing password form remains the way to sign in. After it is configured, both options work; your password stays as a backup.
+
 ## What has been built
 
 | Part | Where it runs | What it does |
@@ -59,6 +61,26 @@ If you only want to change the password of a **local** copy running on your PC, 
 
 **Existing signed-in tabs:** a password change blocks new logins with the old password, but previously issued JWTs can remain valid for up to eight hours. If you need to sign out every existing session immediately, also replace the `JWT_SECRET` GitHub Actions secret with a new random value of at least 32 characters and run the same workflow again. Do not do this routinely; it invalidates all current sessions. Avoid repeated wrong login attempts: five failures for the same username/IP trigger a five-minute lockout.
 
+## Enable Google admin sign-in
+
+Google sign-in lets you use your own Google account at `/admin/`. The website never sees your Google password. It asks Google to sign you in, and the API checks the signed token, its client ID, expiry, verified email, and the exact allowed address `eswarjajjra@gmail.com`. Other Google accounts do **not** get CMS access. The existing admin password remains a separate backup; changing your Google password does **not** change that backup password.
+
+You need to create a Google Cloud OAuth **Web application** client ID once:
+
+1. Sign in to [Google Cloud Console](https://console.cloud.google.com/) with `eswarjajjra@gmail.com`. Create or select a project you control, for example “Eswar Portfolio”. Complete any Google account, project, or consent prompts yourself.
+2. In **Google Auth Platform**, configure **Branding** (app name such as “Eswar Portfolio”, your support email) and **Audience**. If the app is in external/testing mode, add `eswarjajjra@gmail.com` as a test user. You do not need to request access to Gmail, Drive, or other Google data; basic sign-in is enough.
+3. Open **Clients → Create client**, choose **Web application**, and add this **Authorized JavaScript origin** exactly: `https://eswar-jajjara.github.io`. Do **not** include `/eswar-portfolio`, `/admin`, or a trailing slash. For local testing you may also add `http://localhost:5181`. This implementation uses Google's popup callback, so it needs no redirect URI.
+4. Copy the **Client ID** (it ends in `.apps.googleusercontent.com`). It is public configuration, not a password. **Do not send or store the Client secret**; this site does not use it.
+5. In the portfolio repository's [Actions variables](https://github.com/eswar-jajjara/eswar-portfolio/settings/variables/actions), create the repository **variable** `GOOGLE_CLIENT_ID` with that Client ID. In [Actions secrets](https://github.com/eswar-jajjara/eswar-portfolio/settings/secrets/actions), create the repository **secret** `GOOGLE_ADMIN_EMAIL` with `eswarjajjra@gmail.com`. Both must be present together.
+6. On [Build and deploy portfolio](https://github.com/eswar-jajjara/eswar-portfolio/actions/workflows/deploy.yml), choose **Run workflow** on `main` and wait for **success**. The workflow puts the client ID in the frontend and Render API; the email allowlist goes only to Render. The Google button remains hidden if no client ID was present at build time.
+7. Open `/admin/` in a new private/incognito window and choose **Sign in with Google**. Select **only** `eswarjajjra@gmail.com`. Confirm that the CMS loads, then sign out and confirm the existing password backup still works.
+
+If Google sign-in fails, the password form still works. Check the Client ID matches in GitHub and Google Cloud, the authorized origin is **only** the domain above, the allowlisted email is exact, your account is a test user if the Google app is still in testing, and the workflow finished successfully. Do not turn off password login until Google sign-in has been proven on the live site.
+
+Changing your Google Account password is done in your [Google Account security settings](https://myaccount.google.com/security), not in this portfolio. It does not rotate the separate backup CMS password or instantly revoke a CMS session already issued for up to eight hours. For an urgent full sign-out, rotate `JWT_SECRET` as described above. A personal, single-user app may remain in Google Cloud's testing mode; if Google asks for domain verification or app publishing, follow its prompts rather than adding broader permissions or sensitive scopes.
+
+[Google's setup guide](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) explains Web client IDs and origins. [Google's verification guide](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token) explains why the API verifies the token server-side.
+
 ## How code deployments work
 
 Changing React, Java, CSS, or database-migration code is different from editing CMS content. A push to the GitHub repository's `main` branch starts `.github/workflows/deploy.yml`. It tests both apps, deploys the API to Render, builds the Pages site using the public API address, and publishes the frontend. You can see every run on the [Actions page](https://github.com/eswar-jajjara/eswar-portfolio/actions). The same workflow can be started manually with **Run workflow**, such as after changing an admin secret.
@@ -66,7 +88,7 @@ Changing React, Java, CSS, or database-migration code is different from editing 
 Important configuration:
 
 - GitHub **secret** `ADMIN_PASSWORD_HASH` is the bcrypt hash. `JWT_SECRET` signs login tokens. `DATABASE_*` connects to Neon. `RENDER_API_KEY` permits the workflow to deploy. `CORS_ALLOWED_ORIGINS` allows your GitHub Pages origin to call the API.
-- GitHub **variable** `VITE_API_BASE_URL` is the public Render API address. It is not a password.
+- GitHub **variable** `VITE_API_BASE_URL` is the public Render API address. Optional variable `GOOGLE_CLIENT_ID` is also public; secret `GOOGLE_ADMIN_EMAIL` is the server-side Google allowlist.
 - Never paste a secret into a repository file, issue, screenshot, or public chat. If a secret is exposed, rotate it.
 - Do not edit an old Flyway migration after it has run in production. New database changes need a new migration.
 

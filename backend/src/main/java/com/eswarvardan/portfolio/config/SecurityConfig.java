@@ -40,7 +40,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/public/**", "/actuator/health/**").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/google").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().denyAll())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
