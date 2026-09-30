@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useState } from 'react';
 import { adminApi } from './api/client';
 import { initialPortfolio, publicPath, navigate, assetUrl } from './site';
 
@@ -37,13 +37,15 @@ function MediaUpload({ value, onChange, accept, disabled }) {
     } catch (error) { setMessage(error.message || 'Upload failed. Please try again.'); }
     finally { setUploading(false); event.target.value = ''; }
   }
-  return <span className="media-upload"><input type="file" accept={accept} aria-label="Upload a file" disabled={disabled || uploading} onChange={upload} /><small>{uploading ? 'Uploading…' : 'PDF, PNG, JPEG or WebP · up to 5 MB. Uploads are public when linked.'}</small>{message && <small role="status">{message}</small>}{value && <a href={assetUrl(value)} target="_blank" rel="noreferrer">Open current file ↗</a>}</span>;
+  const formats = accept.includes('application/pdf') ? (accept.includes('image/') ? 'PDF or image' : 'PDF') : 'Image';
+  return <span className="media-upload"><input type="file" accept={accept} aria-label="Upload a file" disabled={disabled || uploading} onChange={upload} /><small>{uploading ? 'Uploading…' : `${formats} · up to 5 MB. Uploaded files are public when linked.`}</small>{message && <small role="status">{message}</small>}{value && <a href={assetUrl(value)} target="_blank" rel="noreferrer">Open current file ↗</a>}</span>;
 }
 
 function Field({ id, label, value, onChange, onBlur, multiline = false, type = 'text', required = true, placeholder, disabled = false, autoComplete, options, error, helpText, uploadAccept }) {
-  const describedBy = [helpText && `${id}-help`, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
-  const props = { id, value: value ?? '', onChange: (event) => onChange(event.target.value), onBlur, required, placeholder, disabled, autoComplete, 'aria-invalid': Boolean(error), 'aria-describedby': describedBy };
-  return <label className={`field ${error ? 'has-error' : ''}`}><span>{label}{required === false && <small>Optional</small>}</span>{multiline ? <textarea {...props} rows="4" /> : options ? <select {...props}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input {...props} type={type} />}{uploadAccept && <MediaUpload value={value} onChange={onChange} accept={uploadAccept} disabled={disabled} />}{helpText && <small id={`${id}-help`} className="field-help">{helpText}</small>}{error && <span id={`${id}-error`} className="field-error">{error}</span>}</label>;
+  const controlId = id || useId();
+  const describedBy = [helpText && `${controlId}-help`, error && `${controlId}-error`].filter(Boolean).join(' ') || undefined;
+  const props = { id: controlId, value: value ?? '', onChange: (event) => onChange(event.target.value), onBlur, required, placeholder, disabled, autoComplete, 'aria-invalid': Boolean(error), 'aria-describedby': describedBy };
+  return <div className={`field ${error ? 'has-error' : ''}`}><label className="field-caption" htmlFor={controlId}>{label}{required === false && <small>Optional</small>}</label>{multiline ? <textarea {...props} rows="4" /> : options ? <select {...props}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input {...props} type={type} />}{uploadAccept && <MediaUpload value={value} onChange={onChange} accept={uploadAccept} disabled={disabled} />}{helpText && <small id={`${controlId}-help`} className="field-help">{helpText}</small>}{error && <span id={`${controlId}-error`} className="field-error">{error}</span>}</div>;
 }
 
 function Login({ onLogin, error, busy }) {

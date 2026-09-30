@@ -312,8 +312,8 @@ footer { display: flex; align-items: center; justify-content: space-between; pad
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .field { display: grid; min-width: 0; gap: .42rem; color: var(--muted); font-size: .78rem; font-weight: 700; }
 .field:has(textarea) { grid-column: 1 / -1; }
-.field > span { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
-.field > span small { color: var(--faint); font-size: .67rem; font-weight: 500; }
+.field > .field-caption { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.field > .field-caption small { color: var(--faint); font-size: .67rem; font-weight: 500; }
 .field input, .field textarea, .field select { width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 7px; padding: .72rem .76rem; outline: none; background: var(--ground); color: var(--ink); font-size: .93rem; }
 .field select { cursor: pointer; }
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
